@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: training
+      POSTGRES_USER: training
+      POSTGRES_PASSWORD: training
+    volumes:
+      - database:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U training -d training"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://training:training@db:5432/training
+      DEMO_ACCESS_PASSWORD: ${DEMO_ACCESS_PASSWORD:-}
+      AI_URL: ${AI_URL:-}
+      AI_KEY: ${AI_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_WORKSPACE_CONSENT: ${AI_WORKSPACE_CONSENT:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+  nginx:
+    image: nginx:1.30-alpine
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+volumes:
+  database:
