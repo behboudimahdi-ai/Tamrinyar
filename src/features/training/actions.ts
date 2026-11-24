@@ -1,5 +1,8 @@
 'use server';
 
+import { authenticated, coachOnly, ownAthlete } from '../programs/access';
+import { database, localDemo } from './database';
+import { logCompletion } from '../programs/athlete';
 import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { goalOptions, levelOptions, palette, type Entry } from './model';
@@ -24,6 +27,7 @@ async function mutation(work: () => Promise<void>, ok: string): Promise<Result> 
 }
 
 export async function addStudent(form: FormData): Promise<Result> {
+  if (!localDemo()) coachOnly(await authenticated());
   const name = value(form, 'name', 60);
   const age = number(form, 'age');
   const weight = number(form, 'weight');
@@ -39,6 +43,7 @@ export async function addStudent(form: FormData): Promise<Result> {
 }
 
 export async function savePlan(form: FormData): Promise<Result> {
+  if (!localDemo()) coachOnly(await authenticated());
   const title = value(form, 'title', 80);
   const studentId = value(form, 'studentId');
   const date = value(form, 'date');
@@ -58,6 +63,14 @@ export async function savePlan(form: FormData): Promise<Result> {
 }
 
 export async function setCompletion(sessionId: string, entryId: string, done: boolean): Promise<Result> {
+  if (!localDemo()) {
+    const actor = await authenticated();
+    if (actor.role !== 'ATHLETE') return {error:'ثبت اجرا مخصوص شاگرد است.'};
+    const assigned = await database().scheduledSession.findFirst({where:{id:sessionId,assignment:{coachId:actor.coachId,athleteId:actor.athleteId!}},select:{id:true}});
+    if (assigned) return mutation(async()=>{await logCompletion(actor, sessionId,entryId,done);},'وضعیت حرکت ثبت شد.');
+    const workspace = await readWorkspace();
+    if (!workspace.sessions.some(s=>s.id===sessionId && s.studentId===actor.athleteId)) return {error:'جلسه در دسترس نیست.'};
+  }
   return mutation(() => updateWorkspace(workspace => {
     const entry = workspace.sessions.find(item => item.id === sessionId)?.entries.find(item => item.id === entryId);
     if (!entry) throw new Error('Missing workout entry');
@@ -66,6 +79,7 @@ export async function setCompletion(sessionId: string, entryId: string, done: bo
 }
 
 export async function saveFeedback(form: FormData): Promise<Result> {
+  if (!localDemo()) coachOnly(await authenticated());
   const feedback = value(form, 'feedback', 1500);
   const id = value(form, 'reviewId');
   if (!feedback) return { error: 'متن بازخورد را وارد کنید.' };
@@ -86,6 +100,7 @@ async function parseVideo(form: FormData) {
 }
 
 export async function uploadReview(form: FormData): Promise<Result> {
+  if (!localDemo() && (await authenticated()).role !== 'ATHLETE') return {error:'ارسال اجرا مخصوص شاگرد است.'};
   const sessionId = value(form, 'sessionId');
   const entryId = value(form, 'entryId');
   const workspace = await readWorkspace();
@@ -103,6 +118,7 @@ export async function uploadReview(form: FormData): Promise<Result> {
 }
 
 export async function addTutorial(form: FormData): Promise<Result> {
+  if (!localDemo()) coachOnly(await authenticated());
   const movementId = value(form, 'movementId');
   const workspace = await readWorkspace();
   if (!workspace.movements.some(item => item.id === movementId)) return { error: 'حرکت را دوباره انتخاب کنید.' };
@@ -135,6 +151,7 @@ async function askProvider(system: string, prompt: string) {
 }
 
 export async function draftPlan(studentId: string): Promise<AssistantResult> {
+  if (!localDemo()) coachOnly(await authenticated());
   const { students, movements } = await readWorkspace();
   const student = students.find(item => item.id === studentId);
   if (!student) return { error: 'ابتدا یک شاگرد انتخاب کنید.' };
@@ -165,6 +182,7 @@ export async function draftPlan(studentId: string): Promise<AssistantResult> {
 }
 
 export async function askAssistant(form: FormData): Promise<AssistantResult> {
+  if (!localDemo()) ownAthlete(await authenticated(),String(form.get('studentId') ?? ''));
   const question = value(form, 'question', 500);
   if (!question) return { error: 'سؤال خود را بنویسید.' };
   const workspace = await readWorkspace();

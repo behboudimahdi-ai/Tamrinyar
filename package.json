@@ -10,27 +10,35 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "postinstall": "prisma generate",
-    "typecheck": "tsc --noEmit",
-    "db:deploy": "prisma migrate deploy"
+    "typecheck": "next typegen && tsc --noEmit",
+    "db:deploy": "prisma migrate deploy",
+    "lint": "eslint src tests/workouts scripts/provision-account.mjs",
+    "test:unit": "node --test tests/workouts/recurrence.test.mjs",
+    "test:integration": "node --test tests/workouts/integration.test.mjs",
+    "account:provision": "node scripts/provision-account.mjs"
   },
   "dependencies": {
-    "next": "^16.0.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "lucide-react": "^0.577.0",
-    "@prisma/client": "^7.0.0",
-    "@prisma/adapter-pg": "^7.0.0",
-    "pg": "^8.16.0",
-    "dotenv": "^17.0.0",
     "@fontsource-variable/vazirmatn": "^5.2.0",
-    "prisma": "^7.0.0"
+    "@prisma/adapter-pg": "^7.0.0",
+    "@prisma/client": "^7.0.0",
+    "dotenv": "^17.0.0",
+    "lucide-react": "^0.577.0",
+    "next": "^16.0.0",
+    "pg": "^8.16.0",
+    "prisma": "^7.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "tailwindcss": "^4.1.0",
     "@tailwindcss/postcss": "^4.1.0",
-    "typescript": "^5.9.0",
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0"
+    "@types/react-dom": "^19.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.72.2",
+    "@typescript-eslint/parser": "^8.72.2",
+    "eslint": "^9.39.5",
+    "playwright": "^1.62.1",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.9.0"
   }
 }

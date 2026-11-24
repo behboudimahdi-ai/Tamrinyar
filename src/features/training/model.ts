@@ -1,3 +1,4 @@
+import type { SessionTemplate } from '../programs/definition';
 export const weekdays = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
 export const fa = (value: number) => value.toLocaleString('fa-IR');
 export const dateLabel = (date: string) => new Intl.DateTimeFormat('fa-IR', { day: 'numeric', month: 'long', timeZone: 'Asia/Tehran' }).format(new Date(date + 'T12:00:00Z'));
@@ -13,7 +14,7 @@ export function weekStart(date: string) {
 export type Student = { id: string; name: string; age: number; weight: number; level: string; goal: string; injury: string; color: string };
 export type Movement = { id: string; name: string; group: string; cue: string; video?: string };
 export type Entry = { id: string; movementId: string; sets: number; reps: number; done: boolean };
-export type Session = { id: string; studentId: string; title: string; date: string; entries: Entry[] };
+export type Session = { id: string; studentId: string; title: string; date: string; entries: Entry[]; assignmentId?: string; programName?: string; prescription?: SessionTemplate; revision?: number };
 export type Review = { id: string; sessionId: string; entryId: string; clipId?: string; date: string; feedback: string };
 export type Workspace = { students: Student[]; movements: Movement[]; sessions: Session[]; reviews: Review[] };
 export const levelOptions = ['مبتدی', 'متوسط', 'پیشرفته'];

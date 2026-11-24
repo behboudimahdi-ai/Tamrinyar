@@ -10,9 +10,130 @@ model Workspace {
   data      Json
   revision  Int      @default(0)
   updatedAt DateTime @updatedAt
+  accounts  Account[]
+  athletes  Athlete[]
+  programs  ProgramTemplate[]
 }
 model Clip {
   id      String @id
   content Bytes
   mime    String
+}
+enum AccountRole {
+  COACH
+  ATHLETE
+}
+
+enum ProgramStatus {
+  DRAFT
+  READY
+  ARCHIVED
+}
+
+model Athlete {
+  coachId String
+  id      String
+  name    String
+  coach   Workspace @relation(fields: [coachId], references: [id], onDelete: Restrict)
+  accounts Account[]
+  assignments ProgramAssignment[]
+  @@id([coachId, id])
+  @@index([coachId, name])
+}
+
+model Account {
+  id           String @id @default(uuid())
+  login        String @unique
+  passwordHash String
+  role         AccountRole
+  coachId      String
+  athleteId    String?
+  coach        Workspace @relation(fields: [coachId], references: [id], onDelete: Restrict)
+  athlete      Athlete? @relation(fields: [coachId, athleteId], references: [coachId, id], onDelete: Restrict)
+  sessions     LoginSession[]
+  @@unique([coachId, athleteId])
+}
+
+model LoginSession {
+  digest    String @id
+  accountId String
+  expiresAt DateTime
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  @@index([expiresAt])
+}
+
+model ProgramTemplate {
+  id            String @id @default(uuid())
+  coachId       String
+  coach         Workspace @relation(fields: [coachId], references: [id], onDelete: Restrict)
+  name          String
+  goal          String
+  level         String
+  kind          String
+  durationValue Int
+  durationUnit  String
+  sessionCount  Int
+  status        ProgramStatus
+  revision      Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  versions      ProgramVersion[]
+  assignments   ProgramAssignment[]
+  @@unique([coachId, id])
+  @@index([coachId, status, updatedAt])
+  @@index([coachId, updatedAt])
+}
+
+model ProgramVersion {
+  templateId String
+  revision   Int
+  definition Json
+  createdAt  DateTime @default(now())
+  template   ProgramTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  assignments ProgramAssignment[]
+  @@id([templateId, revision])
+}
+
+model ProgramAssignment {
+  id         String @id @default(uuid())
+  coachId    String
+  athleteId  String
+  templateId String
+  revision   Int
+  requestId  String
+  startDate  DateTime @db.Date
+  endDate    DateTime @db.Date
+  assignedAt DateTime @default(now())
+  athlete    Athlete @relation(fields: [coachId, athleteId], references: [coachId, id], onDelete: Restrict)
+  template   ProgramTemplate @relation(fields: [coachId, templateId], references: [coachId, id], onDelete: Restrict)
+  version    ProgramVersion @relation(fields: [templateId, revision], references: [templateId, revision], onDelete: Restrict)
+  sessions   ScheduledSession[]
+  @@unique([coachId, requestId, athleteId])
+  @@index([coachId, athleteId, startDate])
+  @@index([templateId, revision])
+}
+
+model ScheduledSession {
+  id           String @id @default(uuid())
+  assignmentId String
+  slotId       String
+  cycleIndex   Int
+  date         DateTime @db.Date
+  override     Json?
+  reason       String?
+  revision     Int @default(1)
+  completedAt  DateTime?
+  assignment   ProgramAssignment @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  logs         WorkoutLog[]
+  @@unique([assignmentId, cycleIndex, slotId])
+  @@index([assignmentId, date])
+}
+
+model WorkoutLog {
+  sessionId String
+  entryId   String
+  done      Boolean @default(false)
+  updatedAt DateTime @updatedAt
+  session   ScheduledSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  @@id([sessionId, entryId])
 }
