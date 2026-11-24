@@ -31,15 +31,29 @@ function queueLocal<T>(work: () => Promise<T>) {
   globalStore.localWrites = result.catch(() => undefined);
   return result;
 }
-export async function readWorkspace(athleteId?: string): Promise<Workspace> {
+export async function readWorkspace(athleteId?: string, workouts?: Awaited<ReturnType<typeof assignedWorkouts>>): Promise<Workspace> {
   if (!localDemo()) {
     const actor = await authenticated();
     if (athleteId) ownAthlete(actor, athleteId);
     const scope = actor.role === 'ATHLETE' ? actor.athleteId! : athleteId;
-    const row = await database().workspace.findUniqueOrThrow({where:{id:actor.coachId},select:{data:true}});
-    const workspace = row.data as unknown as Workspace;
-    const legacy = workspace.sessions.filter(s => !scope || s.studentId === scope);
-    const assigned = await assignedWorkouts(actor, scope);
+    const assigned = workouts ?? await assignedWorkouts(actor, scope);
+    let workspace: Workspace;
+    if (scope) {
+      const rows = await database().$queryRaw<{data:Workspace}[]>`SELECT jsonb_build_object(
+        'movements',data->'movements',
+        'students',(SELECT coalesce(jsonb_agg(p),'[]') FROM jsonb_array_elements(data->'students') p WHERE p->>'id'=${scope}),
+        'sessions',(SELECT coalesce(jsonb_agg(s),'[]') FROM jsonb_array_elements(data->'sessions') s WHERE s->>'studentId'=${scope}),
+        'reviews',(SELECT coalesce(jsonb_agg(r),'[]') FROM jsonb_array_elements(data->'reviews') r WHERE
+          EXISTS(SELECT 1 FROM jsonb_array_elements(data->'sessions') s WHERE s->>'studentId'=${scope} AND s->>'id'=r->>'sessionId')
+          OR EXISTS(SELECT 1 FROM "ScheduledSession" s JOIN "ProgramAssignment" a ON a.id=s."assignmentId"
+             WHERE s.id=r->>'sessionId' AND a."coachId"=${actor.coachId} AND a."athleteId"=${scope}))
+      ) AS data FROM "Workspace" WHERE id=${actor.coachId}`;
+      workspace = rows[0].data;
+    } else {
+      const row = await database().workspace.findUniqueOrThrow({where:{id:actor.coachId},select:{data:true}});
+      workspace = row.data as unknown as Workspace;
+    }
+    const legacy = workspace.sessions;
     const sessions = [...legacy,...assigned.sessions];
     const ids = new Set(sessions.map(s=>s.id));
     return {...workspace, sessions, students:workspace.students.filter(s=>!scope || s.id===scope),

@@ -10,15 +10,17 @@ export function AssignmentForm({
   revision,
   program,
   initialAthlete,
+  initialStart,
 }: {
   id: string;
   revision: number;
   program: Definition;
   initialAthlete?: string;
+  initialStart?: string;
 }) {
   const [people, setPeople] = useState<{ id: string; name: string }[] | null>(null);
   const [selected, setSelected] = useState<Record<string, string>>(() =>
-    initialAthlete ? { [initialAthlete]: todayKey() } : {},
+    initialAthlete ? { [initialAthlete]: initialStart ?? todayKey() } : {},
   );
   const [key, setKey] = useState(() => crypto.randomUUID()),
     [confirm, setConfirm] = useState(false),
