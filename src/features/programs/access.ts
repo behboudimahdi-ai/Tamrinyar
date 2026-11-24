@@ -1,6 +1,7 @@
 import 'server-only';
 import { createHash, randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { database } from '../training/database';
 import { ProgramError } from './definition';
@@ -15,7 +16,7 @@ export class AccessError extends ProgramError {
 const derive = promisify(scrypt);
 const cookieName = 'ty_session';
 const digest = (token: string) => createHash('sha256').update(token).digest('hex');
-export async function currentActor(): Promise<Actor | null> {
+export const currentActor = cache(async function currentActor(): Promise<Actor | null> {
   const token = (await cookies()).get(cookieName)?.value;
   if (!token || !process.env.DATABASE_URL) return null;
   const row = await database().loginSession.findUnique({
@@ -23,7 +24,7 @@ export async function currentActor(): Promise<Actor | null> {
     select: { expiresAt: true, account: { select: { role: true, coachId: true, athleteId: true } } },
   });
   return row && row.expiresAt > new Date() ? row.account : null;
-}
+});
 export async function authenticated() {
   const actor = await currentActor();
   if (!actor) throw new AccessError(401, 'ابتدا وارد حساب خود شوید.');

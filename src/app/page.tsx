@@ -11,10 +11,10 @@ import { assignedWorkouts } from '@/features/programs/athlete';
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; athlete?: string }>;
+  searchParams: Promise<{ view?: string; athlete?: string; pending?: string }>;
 }) {
   await connection();
-  const { view, athlete } = await searchParams;
+  const { view, athlete, pending } = await searchParams;
   if (view === 'plans') redirect('/programs');
   const demo = localDemo(),
     actor = demo ? null : await currentActor();
@@ -33,9 +33,10 @@ export default async function Home({
   if (studentId && !workspace.students.some((s) => s.id === studentId)) notFound();
   return (
     <Dashboard
-      key={[screen, studentId].join('/')}
+      key={[screen, studentId, pending].join('/')}
       account={actor ?? undefined}
       initialView={screen}
+      initialPending={coach && screen === 'reviews' && pending === '1'}
       initialStudent={coach ? studentId : undefined}
       programs={assigned?.programs}
       workspace={workspace}

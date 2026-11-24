@@ -2,7 +2,7 @@
 
 import { authenticated, coachOnly, ownAthlete } from '../programs/access';
 import { database, localDemo } from './database';
-import { logCompletion } from '../programs/athlete';
+import { logCompletion, recordScheduledVideo } from '../programs/athlete';
 import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { goalOptions, levelOptions, palette, type Entry } from './model';
@@ -104,12 +104,17 @@ export async function uploadReview(form: FormData): Promise<Result> {
   const sessionId = value(form, 'sessionId');
   const entryId = value(form, 'entryId');
   const workspace = await readWorkspace();
-  const entry = workspace.sessions.find(item => item.id === sessionId)?.entries.find(item => item.id === entryId);
+  const session = workspace.sessions.find(item => item.id === sessionId);
+  const entry = session?.entries.find(item => item.id === entryId);
   if (!entry) return { error: 'حرکت را دوباره انتخاب کنید.' };
   const clip = await parseVideo(form);
   if (!clip) return { error: 'یک فایل MP4 یا WebM حداکثر ۵۰ مگابایتی انتخاب کنید.' };
   const id = randomUUID();
   return mutation(async () => {
+    if (session?.assignmentId && !localDemo()) {
+      await recordScheduledVideo(await authenticated(),sessionId,entryId,id,clip.bytes,clip.mime);
+      return;
+    }
     await saveClip(id, clip.bytes, clip.mime);
     await updateWorkspace(current => {
       current.reviews.unshift({ id, sessionId, entryId, clipId: id, date: new Date().toISOString().slice(0, 10), feedback: '' });

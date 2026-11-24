@@ -41,6 +41,11 @@ function shiftMonths(anchor: number, months: number) {
 }
 export type Occurrence = { slotId: string; cycleIndex: number; date: string };
 export function schedule(program: Definition, start: string) {
+  ensure(
+    Number.isSafeInteger(program.durationValue) && program.durationValue > 0,
+    'مدت برنامه باید مثبت باشد.',
+  );
+  ensure(Number.isSafeInteger(program.cycleLength) && program.cycleLength > 0, 'طول چرخه باید مثبت باشد.');
   const anchor = dateOnly(start);
   const end =
     program.durationUnit === 'month'

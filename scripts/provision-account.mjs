@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { randomBytes, randomUUID, scryptSync } from 'node:crypto';
 import pg from 'pg';
 import { defaultMovements } from '../src/features/training/catalog.ts';

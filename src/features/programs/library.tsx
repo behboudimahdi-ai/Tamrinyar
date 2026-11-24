@@ -93,7 +93,7 @@ export function ProgramLibrary({
         <div>
           <h1>برنامه‌های من</h1>
         </div>
-        <Link href="/programs/builder" className="primary">
+        <Link prefetch={false} href="/programs/builder" className="primary">
           <Plus size={18} />
           ایجاد برنامه تمرینی جدید
         </Link>
@@ -178,7 +178,7 @@ export function ProgramLibrary({
                   جزئیات
                 </button>
                 {item.status !== 'ARCHIVED' && (
-                  <Link className="text-button" href={'/programs/builder?id=' + item.id}>
+                  <Link className="text-button" prefetch={false} href={'/programs/builder?id=' + item.id}>
                     ویرایش
                   </Link>
                 )}

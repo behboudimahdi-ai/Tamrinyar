@@ -64,3 +64,13 @@ test('validation rejects duplicate weekdays and invalid advanced prescriptions',
   assert.throws(() => parseDefinition(p));
   assert.doesNotThrow(() => parseDefinition({ ...freshProgram(), name: 'پیش‌نویس' }, false));
 });
+
+test('monthly cycles retain their original anchor through leap and non-leap Esfand', () => {
+  const monthly = {...make(), kind:'months', cycleLength:1, durationUnit:'month', durationValue:2,
+    sessions:[newSession(0,'row')]};
+  assert.equal(schedule(monthly,'2025-02-18').occurrences[1].date,'2025-03-20');
+  assert.equal(schedule(monthly,'2026-02-19').occurrences[1].date,'2026-03-20');
+  const eight=schedule({...monthly,durationValue:8},'2024-09-21');
+  assert.equal(eight.occurrences[7].date,'2025-04-20');
+  assert.throws(()=>schedule({...monthly,cycleLength:0},'2025-02-18'));
+});

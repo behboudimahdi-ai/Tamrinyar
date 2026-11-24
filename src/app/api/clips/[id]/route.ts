@@ -1,6 +1,9 @@
+import { currentActor } from '@/features/programs/access';
+import { localDemo } from '@/features/training/database';
 import { readClip, readWorkspace } from '@/features/training/store';
 
 export async function GET(request: Request, context: RouteContext<'/api/clips/[id]'>) {
+  if (!localDemo() && !(await currentActor())) return new Response(null,{status:401});
   const { id } = await context.params;
   const workspace = await readWorkspace();
   if (!workspace.reviews.some(review => review.clipId === id) && !workspace.movements.some(movement => movement.video === id)) {

@@ -3,7 +3,7 @@ import plugin from '@typescript-eslint/eslint-plugin';
 export default [
   { ignores: ['node_modules/**', '.next/**', 'src/generated/**'] },
   {
-    files: ['src/**/*.{ts,tsx}', 'tests/workouts/*.mjs', 'scripts/provision-account.mjs'],
+    files: ['src/**/*.{ts,tsx}', 'tests/workouts/*.mjs', 'scripts/*.mjs'],
     languageOptions: {
       parser,
       parserOptions: { ecmaVersion: 'latest', sourceType: 'module', ecmaFeatures: { jsx: true } },

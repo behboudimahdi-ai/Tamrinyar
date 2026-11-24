@@ -138,6 +138,11 @@ export async function editOccurrence(
     }
     const reviews = await tx.$queryRaw<{ id: string }[]>`SELECT item->>'sessionId' AS id FROM "Workspace",
       LATERAL jsonb_array_elements(data->'reviews') item WHERE "Workspace".id=${actor.coachId}`;
+    const recorded = await tx.workoutLog.count({ where: { sessionId } });
+    ensure(
+      !recorded && !reviews.some((r) => r.id === sessionId),
+      'جلسهٔ دارای سابقه یا ویدیو قابل بازنویسی نیست.',
+    );
     const affected = await tx.scheduledSession.updateMany({
       where: {
         assignmentId: session.assignmentId,
@@ -149,10 +154,30 @@ export async function editOccurrence(
       },
       data: { override: slot, reason: reason.trim(), date: newDate, revision: { increment: 1 } },
     });
-    ensure(
-      !reviews.some((x) => x.id === session.id) && affected.count > 0,
-      'جلسهٔ دارای سابقه یا ویدیو قابل بازنویسی نیست.',
-    );
+    ensure(affected.count > 0, 'جلسهٔ دارای سابقه یا ویدیو قابل بازنویسی نیست.');
     return { count: affected.count };
+  });
+}
+
+// Serialize video attachment with edits to the same assignment and preserve its exercise reference.
+export async function recordScheduledVideo(
+  actor: Actor,
+  sessionId: string,
+  entryId: string,
+  id: string,
+  content: Uint8Array<ArrayBuffer>,
+  mime: string,
+) {
+  ensure(actor.role === 'ATHLETE', 'ارسال ویدیو فقط برای شاگرد مجاز است.');
+  return database().$transaction(async (tx) => {
+    const { slot } = await lockedSession(tx, actor, sessionId);
+    ensure(
+      slot.entries.some((e) => e.id === entryId),
+      'این حرکت در جلسه موجود نیست.',
+    );
+    await tx.clip.create({ data: { id, content, mime } });
+    const review = JSON.stringify([{ id, sessionId, entryId, clipId: id, date: todayKey(), feedback: '' }]);
+    await tx.$executeRaw`UPDATE "Workspace" SET data=jsonb_set(data,'{reviews}',${review}::jsonb || coalesce(data->'reviews','[]'::jsonb)),
+      revision=revision+1,"updatedAt"=now() WHERE id=${actor.coachId}`;
   });
 }

@@ -12,10 +12,12 @@
     "postinstall": "prisma generate",
     "typecheck": "next typegen && tsc --noEmit",
     "db:deploy": "prisma migrate deploy",
-    "lint": "eslint src tests/workouts scripts/provision-account.mjs",
+    "lint": "eslint src tests/workouts scripts",
     "test:unit": "node --test tests/workouts/recurrence.test.mjs",
-    "test:integration": "node --test tests/workouts/integration.test.mjs",
-    "account:provision": "node scripts/provision-account.mjs"
+    "test:integration": "node --test tests/workouts/integration.test.mjs tests/workouts/history.test.mjs tests/workouts/migration.test.mjs tests/workouts/import.test.mjs",
+    "account:provision": "node scripts/provision-account.mjs",
+    "test:browser": "node --test --test-concurrency=1 tests/workouts/builder.test.mjs tests/workouts/library.test.mjs tests/workouts/access.test.mjs tests/workouts/video.test.mjs",
+    "workspace:import": "node scripts/import-workspace.mjs"
   },
   "dependencies": {
     "@fontsource-variable/vazirmatn": "^5.2.0",

@@ -14,9 +14,9 @@ import { counts, dateLabel, fa, isBehind, offsetDate, type Review, type Session,
 import { TrainingDialog, type DialogState } from './dialogs';
 import { Overview, Progress, ReviewList, StudentTable, type Screen } from './overview';
 
-export function Dashboard({workspace,today,assistantConnected,account,initialView,initialStudent,programs=[]}: {
+export function Dashboard({workspace,today,assistantConnected,account,initialView,initialStudent,initialPending=false,programs=[]}: {
   workspace:Workspace; today:string; assistantConnected:boolean; account?: Actor; initialView?:Screen;
-  initialStudent?:string; programs?:AssignmentInfo[];
+  initialStudent?:string; initialPending?:boolean; programs?:AssignmentInfo[];
 }) {
   const router = useRouter();
   const [coach, setCoach] = useState(account?.role !== 'ATHLETE');
@@ -25,7 +25,7 @@ export function Dashboard({workspace,today,assistantConnected,account,initialVie
   const [studentDetail, setStudentDetail] = useState(initialStudent ?? '');
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const [query, setQuery] = useState('');
-  const [reviewFilter, setReviewFilter] = useState(false);
+  const [reviewFilter, setReviewFilter] = useState(initialPending);
   const [notice, setNotice] = useState<Result>({});
   const [busy, startTransition] = useTransition();
   const [pendingChecks, markCheck] = useOptimistic<Record<string,boolean>,{id:string;done:boolean}>({},(state,change)=>({...state,[change.id]:change.done}));
@@ -88,7 +88,7 @@ export function Dashboard({workspace,today,assistantConnected,account,initialVie
   }
 
   return <><DashboardShell coach={coach} student={student} screen={screen} go={go} pending={pending}
-    openPending={()=>setReviewFilter(true)} active={active} students={workspace.students}
+    openPending={()=>{if(account){router.push('/?view=reviews&pending=1');return;}go('reviews');setReviewFilter(true);}} active={active} students={workspace.students}
     onStudent={account?undefined:(id)=>{setActive(id);setChat([]);setNotice({});}}
     onSwitch={account?undefined:()=>{setCoach(!coach);setChat([]);go(coach?'schedule':'overview');}}>
 

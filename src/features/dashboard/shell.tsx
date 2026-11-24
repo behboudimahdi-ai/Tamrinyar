@@ -137,8 +137,9 @@ export function DashboardShell({
                 className="icon-button top-bell"
                 aria-label="اعلان ویدیوهای در انتظار"
                 onClick={() => {
-                  navigate('reviews');
-                  openPending?.();
+                  setMenu(false);
+                  if (openPending) openPending();
+                  else navigate('reviews');
                 }}
               >
                 <Bell size={19} />
