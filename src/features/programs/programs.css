@@ -1,0 +1,120 @@
+.wp-content {
+  min-width: 0;
+}
+.wp-panel {
+  padding: clamp(1rem, 3vw, 2rem);
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.wp-panel h1,
+.wp-panel h2,
+.wp-panel h3,
+.wp-preview p {
+  margin: 0;
+}
+.wp-steps,
+.wp-actions {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.wp-steps {
+  padding: 0;
+  list-style: none;
+  margin: 0 0 1rem;
+}
+.wp-steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.55rem;
+  color: var(--muted);
+}
+.wp-steps [aria-current],
+.wp-options input:checked + span strong {
+  color: var(--orange);
+}
+.wp-box,
+.wp-options,
+.wp-recipient {
+  border: 1px solid var(--line);
+  padding: 0.85rem;
+  border-radius: 0.8rem;
+  min-width: 0;
+}
+.wp-box legend,
+.wp-options legend {
+  padding-inline: 0.35rem;
+}
+.wp-box details,
+.wp-box .wp-actions,
+.wp-panel details {
+  margin-top: 0.7rem;
+}
+.wp-options label,
+.wp-recipient > label:first-child {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem;
+}
+.wp-options input,
+.wp-recipient input[type='checkbox'] {
+  width: auto;
+  accent-color: var(--orange);
+}
+.wp-options small {
+  display: block;
+  color: var(--muted);
+}
+.wp-preview,
+.wp-editor {
+  display: grid;
+  gap: 0.7rem;
+}
+.wp-preview {
+  background: var(--bg);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+.wp-preview ol {
+  padding-inline-start: 1.5rem;
+}
+.wp-panel summary,
+.wp-preview summary {
+  cursor: pointer;
+}
+.wp-login {
+  max-width: 30rem;
+  margin: 8vh auto;
+  padding: 1rem;
+}
+.wp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 1rem;
+}
+.wp-actions a {
+  text-decoration: none;
+}
+.wp-panel :focus-visible,
+.wp-actions :focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+@media (max-width: 600px) {
+  .wp-panel .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .wp-steps {
+    column-gap: 0.25rem;
+  }
+  .wp-actions {
+    row-gap: 0.5rem;
+  }
+  .wp-panel {
+    overflow-wrap: anywhere;
+  }
+}
